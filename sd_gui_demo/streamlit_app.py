@@ -25,8 +25,8 @@ if st.button("Generate Image"):
                                       width=width, 
                                       num_inference_steps=num_inference_steps, 
                                       guidance_scale=guidance_scale, 
-                                      seed=seed, 
-                                      image=False)
+                                      seed=seed,
+                                     )
 
     # Display the generated image
     st.image(generated_image, caption="Generated Image", use_column_width=True)
