@@ -7,8 +7,8 @@ from stable_diffusion_demo import StableDiffusion, text_embedder
 st.title("Image Generator App")
 
 # Input fields
-negative_prompt = st.text_input("Negative Prompt", value="").split(',')
 prompt = st.text_input("Prompt", value="").split(',')
+negative_prompt = st.text_input("Negative Prompt", value="").split(',')
 height = st.number_input("Height", min_value=1, max_value=1024, value=512)
 width = st.number_input("Width", min_value=1, max_value=1024, value=512)
 num_inference_steps = st.number_input("Number of Inference Steps", min_value=1, max_value=100, value=50)
@@ -18,8 +18,6 @@ seed = st.number_input("Seed", min_value=0, value=42)
 # Generate button
 if st.button("Generate Image"):
     # Generate the image
-    negative_prompt=text_embedder(negative_prompt)
-    prompt=text_embedder(prompt)
     
     generated_image = StableDiffusion(uncond_embeddings=negative_prompt, 
                                       text_embeddings=prompt, 
@@ -30,10 +28,8 @@ if st.button("Generate Image"):
                                       seed=seed, 
                                       image=False)
 
-    output=generated_image[-1]
-    
     # Display the generated image
-    st.image(output, caption="Generated Image", use_column_width=True)
+    st.image(generated_image, caption="Generated Image", use_column_width=True)
 
 # Note about the placeholder function
 st.markdown("""
