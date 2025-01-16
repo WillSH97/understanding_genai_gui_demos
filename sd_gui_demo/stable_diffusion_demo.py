@@ -4,6 +4,7 @@ import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import AutoencoderKL, UNet2DConditionModel, PNDMScheduler, LMSDiscreteScheduler, StableDiffusionPipeline, UniPCMultistepScheduler
 from torchvision import transforms
+import spaces
 
 torch_device = "cuda" if torch.cuda.is_available() else ("mps" if torch.mps.is_available() else "cpu")
 
@@ -17,8 +18,9 @@ pipe = StableDiffusionPipeline.from_pretrained(
 
 pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
 
-pipe.enable_model_cpu_offload()
+# pipe.enable_model_cpu_offload() <--- disable for ZeroGPU
 
+@spaces.GPU
 def StableDiffusion(uncond_embeddings, text_embeddings, height, width, num_inference_steps, guidance_scale, seed):
     batch_size=1
 
