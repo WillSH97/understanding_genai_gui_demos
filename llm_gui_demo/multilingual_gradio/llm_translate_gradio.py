@@ -1,6 +1,8 @@
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
 from transformers import pipeline
+import pandas as pd
+import gradio as gr
 
 #NLLB translation setup
 
@@ -27,6 +29,11 @@ def translate_to_lang(input_str, target_lang):
     output_str = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
     return output_str
 
+lang_keys = pd.read_csv('flores_200_keys.csv', header=None)
+#FLORES normal name key setup
+flores_dict = {}
+for i in range(len(lang_keys)):
+    flores_dict[lang_keys.loc[i][0]]=lang_keys.loc[i][1]
 
 #Llama 3.2 1b setup
 model_id = "meta-llama/Llama-3.2-1B-Instruct"
@@ -76,4 +83,40 @@ def llama_multilang_roundtrip(input_question, lang):
     response = translate_to_lang(init_response, 'eng_Latn')
     return response
 
+def gradio_func(input_question, left_lang, right_lang):
+    """
+    silly wrapper function for gradio that turns all inputs into a single func. runs both the LHS and RHS of teh 'app' in order to let gradio work correctly.
+    """
+    left_output = llama_multilang_roundtrip(input_question, flores_dict[left_lang])
+    right_output = llama_multilang_roundtrip(input_question, flores_dict[right_lang])
+    return left_output, right_output
 
+# Create the Gradio interface
+def create_interface():
+    # Get available languages from the flores_dict
+    language_choices = list(flores_dict.keys())
+    
+    with gr.Blocks() as demo:
+        gr.Markdown("Ask Llama the same question in different languages!")
+        with gr.Row():
+            question_input = gr.Textbox(label="Enter your question", interactive=True)
+        with gr.Row():
+            left_lang = gr.Dropdown(choices=language_choices, label="Language #1")
+            right_lang = gr.Dropdown(choices=language_choices, label="Language #2")
+        with gr.Row():
+            submit_btn = gr.Button("Translate")
+        with gr.Row():
+            left_output = gr.Textbox(label="Language #1 answer", interactive=False)
+            right_output = gr.Textbox(label="Language #2 answer", interactive=False)
+            
+        submit_btn.click(
+            fn=gradio_func,
+            inputs=[question_input, left_lang, right_lang],
+            outputs=[left_output, right_output]
+        )
+    
+    return demo
+
+# Launch the app
+demo = create_interface()
+demo.launch()
