@@ -45,14 +45,26 @@ def context_window_limiting(history: list[dict], context_window: int):
 
     TO DO
     '''
-    
-    return
+    history_windowed = copy.deepcopy(history)
+    if len(history_windowed) > 0: #has to be a non-empty list
+        # print(history_windowed)
+        # print(llama32_1b_pipe.tokenizer.apply_chat_template(history_windowed))
+        # print(len(llama32_1b_pipe.tokenizer.apply_chat_template(history_windowed)))
+        while len(llama32_1b_pipe.tokenizer.apply_chat_template(history_windowed)) >= context_window:
+            if len(history_windowed) <= 0: #has to be a non-empty list
+                print("Not deleting anything I guess fuck me")
+                break
+            else:
+                del history_windowed[0] #delete first message
+    #DEBUG
+    print(f"number of messages in chat hist: {len(history_windowed)}")
+    return history_windowed
 
 def llama32_1b_chat(message, history, context_window) -> str: 
     "simplifies pipeline output to only return generated text"
     input_history = copy.deepcopy(history)
     input_history.append({"role": "user", "content": message})
-    
+    input_history = context_window_limiting(input_history, context_window)
     ##add sth about context window here
 
     outputs = llama32_1b_pipe(
@@ -67,9 +79,12 @@ def llama32_1b_chat(message, history, context_window) -> str:
 def create_interface():
     
     with gr.Blocks() as demo:
-        gr.Markdown("change context window lmao")
+        gr.Markdown("""change context window lmao.
+        NOTE: the strategy being used to generate outputs based on the simulated context window is to simply delete entire messages from earlier in the conversation until the input fits within the context window. There are several more sophisticated ways in which long chat histories can be dealt with (e.g. summarising the history, deleting messages but keeping keywords/concepts, other clever things), but this is the simplest, and potentially most illustrative of the shortcomings of having a limited context window.
+        
+                    """)
         with gr.Row():
-            context_window = gr.Slider(32, 512, value=256, label="size of context window", info="choose context window size")
+            context_window = gr.Slider(64, 1024, value=256, label="size of context window", info="choose context window size")
         with gr.Row():
             gr.ChatInterface(fn=llama32_1b_chat, additional_inputs = [context_window], type="messages", title="context_window")
     
