@@ -1,12 +1,3 @@
-'''
-I need:
-- a slider at the top
-- chat window
-'''
-
-
-
-
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
 from transformers import pipeline
@@ -14,6 +5,7 @@ import pandas as pd
 import gradio as gr
 import os
 import copy
+import spaces
 
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer, TextIteratorStreamer
 
@@ -60,6 +52,7 @@ def context_window_limiting(history: list[dict], context_window: int):
     print(f"number of messages in chat hist: {len(history_windowed)}")
     return history_windowed
 
+@spaces.GPU
 def llama32_1b_chat(message, history, context_window) -> str: 
     "simplifies pipeline output to only return generated text"
     input_history = copy.deepcopy(history)
