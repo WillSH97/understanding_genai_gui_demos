@@ -58,10 +58,13 @@ llama4_model = Llama4ForConditionalGeneration.from_pretrained(
 def llama4_generate(input_question):
     messages = [
         {"role": "system", "content": [
-            {"type": "text", "text": "You are a helpful chatbot assistant. Answer all questions in the language they are asked in."
+            {"type": "text", "text": "You are a helpful chatbot assistant. Answer all questions in the language they are asked in."}
              ]
         },
-        {"role": "user", "content": [{"type": "text", "text": input_question}],
+        {"role": "user", "content": [
+            {"type": "text", "text": input_question}
+            ]
+        },
         ]
     
     inputs = llama4_processor.apply_chat_template(
@@ -151,4 +154,5 @@ def create_interface():
 # Launch the app
 demo = create_interface()
 demo.launch()
+
 
