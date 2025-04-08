@@ -32,14 +32,59 @@ llama3_pipe = pipeline(
     device_map="auto",
 )
 
-#llama 4 setup
+# #llama 4 setup
+# llama4_model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+# llama4_pipe = pipeline(
+#     "text-generation",
+#     model=llama4_model_id,
+#     torch_dtype=torch.bfloat16,
+#     device_map="auto",
+# )
+
+########################
+from transformers import AutoProcessor, Llama4ForConditionalGeneration
+import torch
+
 llama4_model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-llama4_pipe = pipeline(
-    "text-generation",
-    model=llama4_model_id,
-    torch_dtype=torch.bfloat16,
+
+llama4_processor = AutoProcessor.from_pretrained(llama4_model_id)
+llama4_model = Llama4ForConditionalGeneration.from_pretrained(
+    llama4_model_id,
+    attn_implementation="flex_attention",
     device_map="auto",
+    torch_dtype=torch.bfloat16,
 )
+
+def llama4_generate(input_question):
+    messages = [
+        {"role": "system", "content": [
+            {"type": "text", "text": "You are a helpful chatbot assistant. Answer all questions in the language they are asked in."
+             ]
+        },
+        {"role": "user", "content": [{"type": "text", "text": input_question}],
+        ]
+    
+    inputs = llama4_processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(model.device)
+    
+    outputs = llama4_model.generate(
+        **inputs,
+        max_new_tokens=512,
+    )
+    
+    response = llama4_processor.batch_decode(outputs[:, inputs["input_ids"].shape[-1]:])[0]
+    print(response)
+    return response
+# print(outputs[0])
+
+#########################
+
+
 
 @spaces.GPU
 def llama_QA(input_question, pipe):
@@ -71,7 +116,7 @@ def gradio_func(input_question, left_lang, right_lang):
     output1 = llama_QA(input_question, llama1_pipe)
     output2 = llama_QA(input_question, llama2_pipe)
     output3 = llama_QA(input_question, llama3_pipe)
-    output4 = llama_QA(input_question, llama4_pipe)
+    output4 = llama4_generate(input_question)
     return output1,output2,output3,output4
 
 # Create the Gradio interface
